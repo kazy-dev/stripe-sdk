@@ -37,31 +37,31 @@ class SetupIntentWithScaScreen extends StatelessWidget {
   }
 
   Future<void> completeSetupIntent(BuildContext context, String paymentMethod) async {
-    final stripe = Stripe.instance;
-    final NetworkService networkService = locator.get();
-    showProgressDialog(context);
-    RouteSettings? routeSettings = ModalRoute.of(context)?.settings;
-    final createSetupIntentResponse = await networkService.createSetupIntentWithPaymentMethod(
-      paymentMethod,
-      Stripe.instance.getReturnUrlForSca(webReturnUrl: routeSettings?.name),
-    );
-    final PaymentMethodStore paymentMethods = Provider.of(context, listen: false);
-    if (createSetupIntentResponse.status == 'succeeded') {
-      hideProgressDialog(context);
-      Navigator.pop(context, true);
-
-      /// A new payment method has been attached, so refresh the store
-      var _ = paymentMethods.refresh();
-
-      return;
-    }
-    final setupIntent = await stripe.authenticateSetupIntent(createSetupIntentResponse.clientSecret,
-        webReturnPath: routeSettings?.name, context: context).onError((error, stackTrace) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString())));
-          return {"status": "failed"};
-        });
-    hideProgressDialog(context);
-    Navigator.pop(context, setupIntent['status'] == 'succeeded');
+    // final stripe = Stripe.instance;
+    // final NetworkService networkService = locator.get();
+    // showProgressDialog(context);
+    // RouteSettings? routeSettings = ModalRoute.of(context)?.settings;
+    // final createSetupIntentResponse = await networkService.createSetupIntentWithPaymentMethod(
+    //   paymentMethod,
+    //   Stripe.instance.getReturnUrlForSca(webReturnUrl: routeSettings?.name),
+    // );
+    // final PaymentMethodStore paymentMethods = Provider.of(context, listen: false);
+    // if (createSetupIntentResponse.status == 'succeeded') {
+    //   hideProgressDialog(context);
+    //   Navigator.pop(context, true);
+    //
+    //   /// A new payment method has been attached, so refresh the store
+    //   var _ = paymentMethods.refresh();
+    //
+    //   return;
+    // }
+    // final setupIntent = await stripe.authenticateSetupIntent(createSetupIntentResponse.clientSecret,
+    //     webReturnPath: routeSettings?.name, context: context).onError((error, stackTrace) {
+    //       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString())));
+    //       return {"status": "failed"};
+    //     });
+    // hideProgressDialog(context);
+    // Navigator.pop(context, setupIntent['status'] == 'succeeded');
   }
 
   const SetupIntentWithScaScreen({Key? key}) : super(key: key);

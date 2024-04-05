@@ -59,18 +59,18 @@ class PaymentScreen extends StatelessWidget {
       debugPrint('Success before authentication.');
       return;
     }
-    final result = await Stripe.instance.confirmPayment(
-      response.clientSecret,
-      context,
-      paymentMethodId: 'pm_card_threeDSecure2Required',
-    );
-    if (result['status'] == 'succeeded') {
-      // TODO: success
-      debugPrint('Success after authentication.');
-      return;
-    } else {
-      debugPrint('Error');
-    }
+    // final result = await Stripe.instance.confirmPayment(
+    //   response.clientSecret,
+    //   context,
+    //   paymentMethodId: 'pm_card_threeDSecure2Required',
+    // );
+    // if (result['status'] == 'succeeded') {
+    //   // TODO: success
+    //   debugPrint('Success after authentication.');
+    //   return;
+    // } else {
+    //   debugPrint('Error');
+    // }
   }
 
   void createManualPaymentIntent(BuildContext context) async {
@@ -85,14 +85,14 @@ class PaymentScreen extends StatelessWidget {
       debugPrint('Success before authentication.');
       return;
     }
-    final result = await Stripe.instance.authenticatePayment(response['clientSecret'], context);
-    if (result['status'] == 'requires_confirmation') {
-      // TODO: make call to server to confirm
-      debugPrint('Success after authentication.');
-      return;
-    } else {
-      debugPrint('Error');
-    }
+    // final result = await Stripe.instance.authenticatePayment(response['clientSecret'], context);
+    // if (result['status'] == 'requires_confirmation') {
+    //   // TODO: make call to server to confirm
+    //   debugPrint('Success after authentication.');
+    //   return;
+    // } else {
+    //   debugPrint('Error');
+    // }
   }
 
   const PaymentScreen({Key? key}) : super(key: key);

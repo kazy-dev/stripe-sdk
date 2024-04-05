@@ -5,11 +5,11 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:stripe_sdk/src/ui/stripe_web_view.dart';
-import "package:universal_html/html.dart" as html;
+// import "package:universal_html/html.dart" as html;
 import 'package:url_launcher/url_launcher.dart';
 
 import 'stripe_api.dart';
-import 'stripe_config.dart';
+import 'ui/stripe_ui.dart';
 
 class Stripe {
   /// Creates a new [Stripe] object. Use this constructor if you wish to handle the instance of this class by yourself.
@@ -73,16 +73,16 @@ class Stripe {
 
   /// Authenticate a SetupIntent
   /// https://stripe.com/docs/api/setup_intents/confirm
-  Future<Map<String, dynamic>> authenticateSetupIntent(String clientSecret,
-      {String? webReturnPath, required BuildContext context}) async {
-    final Map<String, dynamic> intent = await api.confirmSetupIntent(
-      clientSecret,
-      data: {'return_url': getReturnUrlForSca(webReturnUrl: webReturnPath)},
-    );
-    // ignore: use_build_context_synchronously
-    if (!context.mounted) return {};
-    return _handleSetupIntent(intent, context);
-  }
+  // Future<Map<String, dynamic>> authenticateSetupIntent(String clientSecret,
+  //     {String? webReturnPath, required BuildContext context}) async {
+  //   final Map<String, dynamic> intent = await api.confirmSetupIntent(
+  //     clientSecret,
+  //     data: {'return_url': getReturnUrlForSca(webReturnUrl: webReturnPath)},
+  //   );
+  //   // ignore: use_build_context_synchronously
+  //   if (!context.mounted) return {};
+  //   return _handleSetupIntent(intent, context);
+  // }
 
   /// Confirm and authenticate a SetupIntent
   /// https://stripe.com/docs/api/setup_intents/confirm
@@ -104,75 +104,75 @@ class Stripe {
   /// Confirm and authenticate a payment.
   /// Returns the PaymentIntent.
   /// https://stripe.com/docs/payments/payment-intents/android
-  Future<Map<String, dynamic>> confirmPayment(String paymentIntentClientSecret, BuildContext context,
-      {String? paymentMethodId}) async {
-    final data = {'return_url': getReturnUrlForSca()};
-    if (paymentMethodId != null) data['payment_method'] = paymentMethodId;
-    final Map<String, dynamic> paymentIntent = await api.confirmPaymentIntent(
-      paymentIntentClientSecret,
-      data: data,
-    );
-    // ignore: use_build_context_synchronously
-    if (!context.mounted) return {};
-    return _handlePaymentIntent(paymentIntent, context);
-  }
+  // Future<Map<String, dynamic>> confirmPayment(String paymentIntentClientSecret, BuildContext context,
+  //     {String? paymentMethodId}) async {
+  //   final data = {'return_url': getReturnUrlForSca()};
+  //   if (paymentMethodId != null) data['payment_method'] = paymentMethodId;
+  //   final Map<String, dynamic> paymentIntent = await api.confirmPaymentIntent(
+  //     paymentIntentClientSecret,
+  //     data: data,
+  //   );
+  //   // ignore: use_build_context_synchronously
+  //   if (!context.mounted) return {};
+  //   return _handlePaymentIntent(paymentIntent, context);
+  // }
 
   /// Confirm and authenticate a payment with Google Pay.
   /// /// [paymentResult] must be the result of requesting a Google Pay payment with the `pay` library.
   /// Returns the PaymentIntent.
-  Future<Map<String, dynamic>> confirmPaymentWithGooglePay(BuildContext context,
-      {required String paymentIntentClientSecret, required Map<String, dynamic> paymentResult}) async {
-    final data = <String, dynamic>{'return_url': getReturnUrlForSca()};
-    final String token = paymentResult['paymentMethodData']['tokenizationData']['token'] as String;
-    final tokenJson = jsonDecode(token) as Map<String, dynamic>;
-    final tokenId = tokenJson['id'] as String;
-    data['payment_method_data'] = {
-      'type': 'card',
-      "card": {"token": tokenId}
-    };
-    final Map<String, dynamic> paymentIntent = await api.confirmPaymentIntent(
-      paymentIntentClientSecret,
-      data: data,
-    );
-    // ignore: use_build_context_synchronously
-    if (!context.mounted) return {};
-    return _handlePaymentIntent(paymentIntent, context);
-  }
+  // Future<Map<String, dynamic>> confirmPaymentWithGooglePay(BuildContext context,
+  //     {required String paymentIntentClientSecret, required Map<String, dynamic> paymentResult}) async {
+  //   final data = <String, dynamic>{'return_url': getReturnUrlForSca()};
+  //   final String token = paymentResult['paymentMethodData']['tokenizationData']['token'] as String;
+  //   final tokenJson = jsonDecode(token) as Map<String, dynamic>;
+  //   final tokenId = tokenJson['id'] as String;
+  //   data['payment_method_data'] = {
+  //     'type': 'card',
+  //     "card": {"token": tokenId}
+  //   };
+  //   final Map<String, dynamic> paymentIntent = await api.confirmPaymentIntent(
+  //     paymentIntentClientSecret,
+  //     data: data,
+  //   );
+  //   // ignore: use_build_context_synchronously
+  //   if (!context.mounted) return {};
+  //   return _handlePaymentIntent(paymentIntent, context);
+  // }
 
   /// Confirm and authenticate a payment with Apple Pay.
   /// [paymentResult] must be the result of requesting a Apple Pay payment with the `pay` library.
   /// Returns the PaymentIntent.
-  Future<Map<String, dynamic>> confirmPaymentWithApplePay(BuildContext context,
-      {required String paymentIntentClientSecret, required Map<String, dynamic> paymentResult}) async {
-    final tokenPayload = <String, dynamic>{};
-    tokenPayload['pk_token'] = paymentResult['token'];
-    final paymentMethod = _getPaymentMethod(paymentResult['paymentMethod']);
-    tokenPayload['pk_token_instrument_name'] = paymentMethod['displayName'];
-    tokenPayload['pk_token_payment_network'] = paymentMethod['network'];
-    tokenPayload['card'] = <String, dynamic>{};
-    tokenPayload['pk_token_transaction_id'] = paymentResult['transactionIdentifier'];
-
-    if (tokenPayload['pk_token_transaction_id'] == "Simulated Identifier") {
-      tokenPayload['pk_token_transaction_id'] =
-          "ApplePayStubs~4242424242424242~200~USD~${DateTime.now().millisecondsSinceEpoch}";
-    }
-
-    final stripeToken = await api.createToken(tokenPayload);
-    final tokenId = stripeToken['id'] as String;
-
-    final data = <String, dynamic>{'return_url': getReturnUrlForSca()};
-    data['payment_method_data'] = {
-      'type': 'card',
-      "card": {"token": tokenId}
-    };
-    final Map<String, dynamic> paymentIntent = await api.confirmPaymentIntent(
-      paymentIntentClientSecret,
-      data: data,
-    );
-    // ignore: use_build_context_synchronously
-    if (!context.mounted) return {};
-    return _handlePaymentIntent(paymentIntent, context);
-  }
+  // Future<Map<String, dynamic>> confirmPaymentWithApplePay(BuildContext context,
+  //     {required String paymentIntentClientSecret, required Map<String, dynamic> paymentResult}) async {
+  //   final tokenPayload = <String, dynamic>{};
+  //   tokenPayload['pk_token'] = paymentResult['token'];
+  //   final paymentMethod = _getPaymentMethod(paymentResult['paymentMethod']);
+  //   tokenPayload['pk_token_instrument_name'] = paymentMethod['displayName'];
+  //   tokenPayload['pk_token_payment_network'] = paymentMethod['network'];
+  //   tokenPayload['card'] = <String, dynamic>{};
+  //   tokenPayload['pk_token_transaction_id'] = paymentResult['transactionIdentifier'];
+  //
+  //   if (tokenPayload['pk_token_transaction_id'] == "Simulated Identifier") {
+  //     tokenPayload['pk_token_transaction_id'] =
+  //         "ApplePayStubs~4242424242424242~200~USD~${DateTime.now().millisecondsSinceEpoch}";
+  //   }
+  //
+  //   final stripeToken = await api.createToken(tokenPayload);
+  //   final tokenId = stripeToken['id'] as String;
+  //
+  //   final data = <String, dynamic>{'return_url': getReturnUrlForSca()};
+  //   data['payment_method_data'] = {
+  //     'type': 'card',
+  //     "card": {"token": tokenId}
+  //   };
+  //   final Map<String, dynamic> paymentIntent = await api.confirmPaymentIntent(
+  //     paymentIntentClientSecret,
+  //     data: data,
+  //   );
+  //   // ignore: use_build_context_synchronously
+  //   if (!context.mounted) return {};
+  //   return _handlePaymentIntent(paymentIntent, context);
+  // }
 
   Map<String, dynamic> _getPaymentMethod(dynamic paymentMethod) {
     if (paymentMethod is String) {
@@ -185,20 +185,20 @@ class Stripe {
   /// Authenticate a payment.
   /// Returns the PaymentIntent.
   /// https://stripe.com/docs/payments/payment-intents/android-manual
-  Future<Map<String, dynamic>> authenticatePayment(String paymentIntentClientSecret, BuildContext context) async {
-    final Map<String, dynamic> paymentIntent = await api.retrievePaymentIntent(paymentIntentClientSecret);
-    // ignore: use_build_context_synchronously
-    if (!context.mounted) return {};
-    return _handlePaymentIntent(paymentIntent, context);
-  }
+  // Future<Map<String, dynamic>> authenticatePayment(String paymentIntentClientSecret, BuildContext context) async {
+  //   final Map<String, dynamic> paymentIntent = await api.retrievePaymentIntent(paymentIntentClientSecret);
+  //   // ignore: use_build_context_synchronously
+  //   if (!context.mounted) return {};
+  //   return _handlePaymentIntent(paymentIntent, context);
+  // }
 
   /// Authenticate a payment with [paymentIntent].
   /// This is similar to [authenticatePayment] but is slightly more efficient,
   /// as it avoids the request to the Stripe API to retrieve the action.
   /// To use this, return the complete [paymentIntent] from your server.
-  Future<Map<String, dynamic>> _handlePaymentIntent(Map<String, dynamic> paymentIntent, BuildContext context) async {
-    return _authenticateIntent(paymentIntent, context, api.retrievePaymentIntent);
-  }
+  // Future<Map<String, dynamic>> _handlePaymentIntent(Map<String, dynamic> paymentIntent, BuildContext context) async {
+  //   return _authenticateIntent(paymentIntent, context, api.retrievePaymentIntent);
+  // }
 
   /// Launch 3DS in a new browser window.
   /// Returns a [Future] with the Stripe SetupIntent when the user completes or cancels authentication.
@@ -215,60 +215,60 @@ class Stripe {
     final returnUri = Uri.parse(action['redirect_to_url']['return_url']);
 
     if (kIsWeb) {
-      return _authenticateWithBrowser(context, url, returnUri, getIntentFunction, clientSecret);
+      // return _authenticateWithBrowser(context, url, returnUri, getIntentFunction, clientSecret);
     } else {
       await _authenticateWithWebView(context, url, returnUri);
       return getIntentFunction(clientSecret);
     }
   }
 
-  Future<Map<String, dynamic>> _authenticateWithBrowser(BuildContext context, String url, Uri returnUri,
-      Future<Map<String, dynamic>> Function(String clientSecret) getIntentFunction, String clientSecret) async {
-    final completer = Completer<Map<String, dynamic>>();
-
-    late StreamSubscription<html.Event> subscription;
-    subscription = html.window.onFocus.listen((event) async {
-      final intent = await getIntentFunction(clientSecret);
-      // ignore: use_build_context_synchronously
-      if (!context.mounted) return;
-      if (intent['status'] != 'requires_action') {
-        Navigator.of(context).pop();
-        subscription.cancel();
-        await Future.delayed(const Duration(seconds: 1));
-        completer.complete(intent);
-        return;
-      }
-    });
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => SimpleDialog(
-        title: const Text("Awaiting authentication, please complete authentication in the opened window."),
-        children: [
-          SimpleDialogOption(
-            child: const Text("Cancel"),
-            onPressed: () {
-              Navigator.of(context).pop();
-              subscription.cancel();
-              completer.complete(getIntentFunction(clientSecret));
-            },
-          ),
-          SimpleDialogOption(
-            child: const Text("Open new window"),
-            onPressed: () {
-              Navigator.of(context).pop();
-              launchUrl(Uri.parse(url));
-            },
-          )
-        ],
-      ),
-    );
-
-    await launchUrl(Uri.parse(url));
-
-    return completer.future;
-  }
-
+  // Future<Map<String, dynamic>> _authenticateWithBrowser(BuildContext context, String url, Uri returnUri,
+  //     Future<Map<String, dynamic>> Function(String clientSecret) getIntentFunction, String clientSecret) async {
+  //   final completer = Completer<Map<String, dynamic>>();
+  //
+  //   late StreamSubscription<html.Event> subscription;
+  //   subscription = html.window.onFocus.listen((event) async {
+  //     final intent = await getIntentFunction(clientSecret);
+  //     // ignore: use_build_context_synchronously
+  //     if (!context.mounted) return;
+  //     if (intent['status'] != 'requires_action') {
+  //       Navigator.of(context).pop();
+  //       subscription.cancel();
+  //       await Future.delayed(const Duration(seconds: 1));
+  //       completer.complete(intent);
+  //       return;
+  //     }
+  //   });
+  //   showDialog(
+  //     context: context,
+  //     barrierDismissible: false,
+  //     builder: (context) => SimpleDialog(
+  //       title: const Text("Awaiting authentication, please complete authentication in the opened window."),
+  //       children: [
+  //         SimpleDialogOption(
+  //           child: const Text("Cancel"),
+  //           onPressed: () {
+  //             Navigator.of(context).pop();
+  //             subscription.cancel();
+  //             completer.complete(getIntentFunction(clientSecret));
+  //           },
+  //         ),
+  //         SimpleDialogOption(
+  //           child: const Text("Open new window"),
+  //           onPressed: () {
+  //             Navigator.of(context).pop();
+  //             launchUrl(Uri.parse(url));
+  //           },
+  //         )
+  //       ],
+  //     ),
+  //   );
+  //
+  //   await launchUrl(Uri.parse(url));
+  //
+  //   return completer.future;
+  // }
+  //
   Future<bool?> _authenticateWithWebView(BuildContext context, String url, Uri returnUri) async {
     return Navigator.push<bool?>(
         context,
