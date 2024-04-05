@@ -4,12 +4,13 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:stripe_sdk/src/stripe_config.dart';
 import 'package:stripe_sdk/src/ui/stripe_web_view.dart';
 // import "package:universal_html/html.dart" as html;
 import 'package:url_launcher/url_launcher.dart';
 
 import 'stripe_api.dart';
-import 'ui/stripe_ui.dart';
+// import 'ui/stripe_ui.dart';
 
 class Stripe {
   /// Creates a new [Stripe] object. Use this constructor if you wish to handle the instance of this class by yourself.
@@ -214,12 +215,8 @@ class Stripe {
     final String url = action['redirect_to_url']['url'];
     final returnUri = Uri.parse(action['redirect_to_url']['return_url']);
 
-    if (kIsWeb) {
-      // return _authenticateWithBrowser(context, url, returnUri, getIntentFunction, clientSecret);
-    } else {
-      await _authenticateWithWebView(context, url, returnUri);
-      return getIntentFunction(clientSecret);
-    }
+    await _authenticateWithWebView(context, url, returnUri);
+    return getIntentFunction(clientSecret);
   }
 
   // Future<Map<String, dynamic>> _authenticateWithBrowser(BuildContext context, String url, Uri returnUri,
